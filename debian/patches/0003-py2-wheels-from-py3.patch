@@ -1,0 +1,153 @@
+From: Scott Kitterman <scott@kitterman.com>
+Date: Fri, 1 May 2020 16:21:01 -0400
+Subject: py2 wheels from py3
+
+---
+ dirtbike/__init__.py | 22 ++++++++++++++++------
+ dirtbike/__main__.py |  3 +++
+ dirtbike/strategy.py | 40 +++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 58 insertions(+), 7 deletions(-)
+
+diff --git a/dirtbike/__init__.py b/dirtbike/__init__.py
+index 9164b99..5cd0958 100644
+--- a/dirtbike/__init__.py
++++ b/dirtbike/__init__.py
+@@ -7,6 +7,7 @@ import errno
+ import atexit
+ import shutil
+ import tempfile
++import pathlib
+ import distutils.dist
+ import wheel.bdist_wheel
+ 
+@@ -21,7 +22,7 @@ except ImportError:
+ 
+ from .strategy import (
+     DpkgEggStrategy, DpkgImpStrategy, DpkgImportCalloutStrategy,
+-    DpkgImportlibStrategy, WheelStrategy)
++    DpkgImportlibStrategy, WheelStrategy, DpkgEggImportCalloutStrategy)
+ 
+ 
+ STRATEGIES = (
+@@ -30,9 +31,15 @@ STRATEGIES = (
+     DpkgEggStrategy,
+     DpkgImportlibStrategy,
+     DpkgImpStrategy,
++    DpkgEggImportCalloutStrategy,
+     DpkgImportCalloutStrategy,
+     )
+ 
++STRATEGIES_PY2 = (
++    # The order is significant here, so DO NOT sort alphabetically.
++    DpkgEggImportCalloutStrategy,
++    DpkgImportCalloutStrategy,
++    )
+ 
+ # os.makedirs(, exist_ok=True) doesn't exist in Python 2.
+ def _mkdir_p(dirname):
+@@ -53,7 +60,11 @@ def _copy_file_making_dirs_as_needed(src, dst):
+ def make_wheel_file(args):
+     distribution_name = args.package
+     # Grab the metadata for the installed version of this distribution.
+-    for strategy_class in STRATEGIES:
++    if args.py2:
++        strategies = STRATEGIES_PY2
++    else:
++        strategies = STRATEGIES
++    for strategy_class in strategies:
+         strategy = strategy_class(distribution_name)
+         if strategy.can_succeed:
+             break
+@@ -86,10 +97,9 @@ def make_wheel_file(args):
+ 
+     wheel_generator = wheel.bdist_wheel.bdist_wheel(
+         dummy_dist_distribution_obj)
+-    # python3-setuptools is now python3 only, so the wheel shoulld be py3.
+-    # If other changes are made to allow building a wheel from
+-    # python-setuptools, this will also support a py2 only wheel for it.
+-    if distribution_name != 'setuptools' and distribution_name != 'pkg_resources':
++    # python3-setuptools is now python3 only, so the wheel shoulld be py3 only.
++    # python-setuptools, using --py2 builds a universal wheel.
++    if (distribution_name != 'setuptools' and distribution_name != 'pkg_resources') or args.py2:
+         wheel_generator.universal = True
+     wheel_generator.bdist_dir = bdist_dir
+     wheel_generator.dist_dir = dist_dir
+diff --git a/dirtbike/__main__.py b/dirtbike/__main__.py
+index c9923ef..e8a6a63 100644
+--- a/dirtbike/__main__.py
++++ b/dirtbike/__main__.py
+@@ -15,6 +15,9 @@ def parseargs():
+     parser.add_argument('package', nargs=1,
+                         help="""The name of the package to rewheel, as seen by
+                         Python (not your OS!).""")
++    parser.add_argument("--py2", default=False, action="store_true" ,
++                        help="""Use the python2 site-packages directory to build
++                        the wheel""")
+     parser.epilog = """\
+ dirtbike also recognizes the environment variable $DIRTBIKE_DIRECTORY which if
+ set, is used as the directory to put .whl files in.  This is analogous to the
+diff --git a/dirtbike/strategy.py b/dirtbike/strategy.py
+index 16f61e8..5486601 100644
+--- a/dirtbike/strategy.py
++++ b/dirtbike/strategy.py
+@@ -8,6 +8,7 @@ import imp
+ import sys
+ import errno
+ import importlib
++import pathlib
+ import subprocess
+ import pkg_resources
+ 
+@@ -278,6 +279,43 @@ class DpkgImpStrategy(Strategy, _DpkgBaseStrategy):
+     def files(self):
+         return self._files
+ 
++class DpkgEggImportCalloutStrategy(Strategy, _DpkgBaseStrategy):
++    """ Use dpkg, but find the file by shelling out to some other Python."""
++
++    def __init__(self, name):
++        super(DpkgEggImportCalloutStrategy, self).__init__(name)
++        self._location = None
++        other_python = '/usr/bin/python{}'.format(
++            2 if sys.version_info.major == 3 else 3)
++        command = [other_python,
++                   '-c', "import pkg_resources; print((pkg_resources.get_distribution('{0}'))._provider.egg_info); print((pkg_resources.get_distribution('{0}')).location); print((pkg_resources.get_distribution('{0}')).version)".format(name)]
++        try:
++            stdout = subprocess.run(command, capture_output=True, text=True).stdout
++        except subprocess.CalledProcessError:
++            return
++        filenames = stdout.splitlines()
++        try:
++            self._location = filenames[1]
++            self._version = filenames[2]
++            self._files = list(self._find_files(filenames[0], self._location))
++        except IndexError:
++            return
++
++    @property
++    def can_succeed(self):
++        return self._location is not None
++
++    @property
++    def version(self):
++        return self._version
++
++    @property
++    def location(self):
++        return self._location
++
++    @property
++    def files(self):
++        return self._files
+ 
+ class DpkgImportCalloutStrategy(Strategy, _DpkgBaseStrategy):
+     """ Use dpkg, but find the file by shelling out to some other Python."""
+@@ -298,7 +336,7 @@ class DpkgImportCalloutStrategy(Strategy, _DpkgBaseStrategy):
+         # In Python 2, this will end with .pyc but that's not owned by any
+         # package.  So ensure the path ends in .py always.
+         root, ext = os.path.splitext(filename)
+-        self._location = os.path.dirname(filename)
++        self._location = str(pathlib.Path(filename).parent.parent)
+         self._files = list(self._find_files(root + '.py', self._location))
+ 
+     @property

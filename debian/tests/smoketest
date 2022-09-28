@@ -1,0 +1,8 @@
+#!/bin/sh
+
+apt-get install -y python3-six
+dirtbike six
+apt-get purge -y python3-six
+
+export PYTHONPATH=`find . -maxdepth 1 -name six\*.whl`
+python3 -c "import six; print(six.__file__)"

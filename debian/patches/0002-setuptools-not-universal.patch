@@ -1,0 +1,25 @@
+From: Scott Kitterman <scott@kitterman.com>
+Date: Thu, 30 Apr 2020 11:58:33 -0400
+Subject: setuptools not universal
+
+---
+ dirtbike/__init__.py | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/dirtbike/__init__.py b/dirtbike/__init__.py
+index 4f8f6e7..9164b99 100644
+--- a/dirtbike/__init__.py
++++ b/dirtbike/__init__.py
+@@ -86,7 +86,11 @@ def make_wheel_file(args):
+ 
+     wheel_generator = wheel.bdist_wheel.bdist_wheel(
+         dummy_dist_distribution_obj)
+-    wheel_generator.universal = True
++    # python3-setuptools is now python3 only, so the wheel shoulld be py3.
++    # If other changes are made to allow building a wheel from
++    # python-setuptools, this will also support a py2 only wheel for it.
++    if distribution_name != 'setuptools' and distribution_name != 'pkg_resources':
++        wheel_generator.universal = True
+     wheel_generator.bdist_dir = bdist_dir
+     wheel_generator.dist_dir = dist_dir
+ 

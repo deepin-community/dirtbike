@@ -1,0 +1,3 @@
+0001-Support-RECORD-files-with-sha256sum-and-file-size.patch
+0002-setuptools-not-universal.patch
+0003-py2-wheels-from-py3.patch

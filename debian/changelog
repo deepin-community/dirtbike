@@ -1,0 +1,103 @@
+dirtbike (0.3-8) unstable; urgency=medium
+
+  [ Ondřej Nový ]
+  * d/copyright: Use https protocol in Format field.
+  * d/control: Update Maintainer field with new Debian Python Team
+    contact address.
+  * d/control: Update Vcs-* fields with new Debian Python Team Salsa
+    layout.
+  * d/watch: Use https protocol.
+
+  [ Debian Janitor ]
+  * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository,
+    Repository-Browse.
+  * Changed vcs type from git to Git based on URL.
+  * Re-export upstream signing key without extra signatures.
+  * Remove MIA uploader Barry Warsaw <barry@debian.org>. Closes: #970115
+  * Bump debhelper from old 12 to 13.
+  * Update standards version to 4.5.1, no changes needed.
+
+ -- Sandro Tosi <morph@debian.org>  Tue, 14 Sep 2021 23:38:30 -0400
+
+dirtbike (0.3-7) unstable; urgency=medium
+
+  * Update d/p/0003-py2-wheels-from-py3.patch so that the module location used
+    by DpkgImportCalloutStrategy is correct and remove DpkgImportlibStrategy
+    from the list of strategies used with python2, since only the callout
+    strategies work to get files from another python variant
+
+ -- Scott Kitterman <scott@kitterman.com>  Sun, 03 May 2020 01:37:02 -0400
+
+dirtbike (0.3-6) unstable; urgency=medium
+
+  * Add myself to uploaders
+  * Add d/p/0002-setuptools-not-universal.patch to build a py2/py3 wheel based
+    on the python environment since python-setuptools and python3-setuptools
+    have diverged
+  * Add d/p/0003-py2-wheels-from-py3.patch to enable building universal wheels
+    from a python2 package so that we can make the setuptools and
+    pkg_resources wheels for pip from the python packages
+    - New --py2 flag to force building from the python2 namespace
+    - New DpkgEggImportCalloutStrategy class to make it possible to get the
+      version attribute from a python2 package
+
+ -- Scott Kitterman <scott@kitterman.com>  Sat, 02 May 2020 17:14:27 -0400
+
+dirtbike (0.3-5) unstable; urgency=medium
+
+  * Add d/p/0001-Support-RECORD-files-with-sha256sum-and-file-size.patch so
+    dirtbike can build wheels from flit generated packages
+
+ -- Scott Kitterman <scott@kitterman.com>  Sat, 11 Apr 2020 23:06:51 -0400
+
+dirtbike (0.3-4) unstable; urgency=medium
+
+  * Add breaks-testbed since autopkgtest gets removed when run with no
+    virtualization
+  * Incorporate NMU that added depends on python3-distutils
+
+ -- Scott Kitterman <scott@kitterman.com>  Sun, 22 Mar 2020 14:00:47 -0400
+
+dirtbike (0.3-3) unstable; urgency=medium
+
+  * Team upload.
+
+  [ Barry Warsaw ]
+  * d/control: Put PAPT in Maintainers and myself in Uploaders.
+
+  [ Scott Kitterman ]
+  * Update Vcs-* to point to PAPT Salsa repo
+  * Use debhelper-compat and bump compat to 12
+  * Delete obsolete X-Python3-Version field from d/control
+  * Bump standards-version to 4.5.0 without further change
+  * Update d/tests/control to allow-stderr since tests are currently failing
+    when apt prints to stderr while installing depends
+
+ -- Scott Kitterman <scott@kitterman.com>  Sun, 22 Mar 2020 13:40:32 -0400
+
+dirtbike (0.3-2.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Depend on python3-distutils.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 11 Apr 2018 23:32:57 +0200
+
+dirtbike (0.3-2) unstable; urgency=medium
+
+  * d/rules: Isolate dirtbike from the user's environment by adding -I to
+    the shebang line via override_dh_python3 rule.
+  * d/control: Bump Standards-Version to 3.9.7 with no other changes needed.
+
+ -- Barry Warsaw <barry@debian.org>  Thu, 14 Apr 2016 14:48:56 -0400
+
+dirtbike (0.3-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Barry Warsaw <barry@debian.org>  Sat, 06 Feb 2016 15:34:26 -0500
+
+dirtbike (0.2-1) unstable; urgency=medium
+
+  * Initial release. (Closes: #811110)
+
+ -- Barry Warsaw <barry@debian.org>  Thu, 28 Jan 2016 15:21:55 -0500

@@ -1,0 +1,2 @@
+Tests: smoketest
+Restrictions: needs-root,allow-stderr,breaks-testbed
